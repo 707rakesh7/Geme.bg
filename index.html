@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎯 कलर प्रेडिक्शन गेम</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Noto Sans Devanagari', sans-serif;
+        }
+        .notification {
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .selected-color {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(255, 193, 7, 0.5);
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+    <!-- Notifications -->
+    <div id="notifications" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    <div class="p-4">
+        <div class="max-w-4xl mx-auto">
+            
+            <!-- Header -->
+            <div class="bg-white bg-opacity-10 backdrop-blur-lg rounded-xl p-6 mb-6 text-white">
+                <h1 class="text-4xl font-bold text-center mb-4">🎯 कलर प्रेडिक्शन गेम</h1>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                    <div class="bg-white bg-opacity-10 rounded-lg p-3">
+                        <div class="font-semibold mb-1">💰 बैलेंस</div>
+                        <span id="balance" class="text-2xl font-bold text-yellow-400">₹1000</span>
+                    </div>
+                    <div class="bg-white bg-opacity-10 rounded-lg p-3">
+                        <div class="font-semibold mb-1">🏆 जीत दर</div>
+                        <span id="winRate" class="text-2xl font-bold text-green-400">0%</span>
+                    </div>
+                    <div class="bg-white bg-opacity-10 rounded-lg p-3">
+                        <div class="font-semibold mb-1">🔥 स्ट्रीक</div>
+                        <span id="streak" class="text-2xl font-bold text-orange-400">0</span>
+                    </div>
+                    <div class="bg-white bg-opacity-10 rounded-lg p-3">
+                        <div class="font-semibold mb-1">📊 कुल गेम</div>
+                        <span id="totalGames" class="text-2xl font-bold text-blue-400">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid lg:grid-cols-3 gap-6">
+                
+                <!-- Game Area -->
+                <div class="lg:col-span-2">
+                    
+                    <!-- Timer and Status -->
+                    <div class="bg-white bg-opacity-10 backdrop-blur-lg rounded-xl p-6 mb-6 text-center">
+                        <div id="gameStatus">
+                            <div class="text-2xl font-bold text-white mb-4">गेम शुरू करने के लिए तैयार!</div>
+                            <button 
+                                onclick="startNewGame()"
+                                class="bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-lg font-bold text-xl transition-colors"
+                            >
+                                गेम शुरू करें
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Color Selection -->
+                    <div class="bg-white bg-opacity-10 backdrop-blur-lg rounded-xl p-6 mb-6">
+                        <h2 class="text-2xl font-bold text-white mb-4 text-center">अपना रंग चुनें</h2>
+                        <div id="colorGrid" class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            <!-- Colors will be populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <!-- Bet Amount -->
+                    <div class="bg-white bg-opacity-10 backdrop-blur-lg rounded-xl p-6">
+                        <h3 class="text-xl font-bold text-white mb-4">बेट अमाउंट</h3>
+                        <div class="grid grid-cols-4 gap-3 mb-4">
+                            <button onclick="quickBet(10)" class="bet-btn py-3 px-4 rounded-lg font-bold transition-colors bg-white bg-opacity-10 text-white hover:bg-opacity-20">₹10</button>
+                            <button onclick="quickBet(50)" class="bet-btn py-3 px-4 rounded-lg font-bold transition-colors bg-white bg-opacity-10 text-white hover:bg-opacity-20">₹50</button>
+                            <button onclick="quickBet(100)" class="bet-btn py-3 px-4 rounded-lg font-bold transition-colors bg-white bg-opacity-10 text-white hover:bg-opacity-20">₹100</button>
+                            <button onclick="quickBet(500)" class="bet-btn py-3 px-4 rounded-lg font-bold transition-colors bg-white bg-opacity-10 text-white hover:bg-opacity-20">₹500</button>
+                        </div>
+                        <input
+                            type="number"
+                            id="betAmount"
+                            value="10"
+                            min="1"
+                            class="w-full p-3 rounded-lg bg-white bg-opacity-10 text-white border border-white border-opacity-20 focus:border-yellow-400 outline-none"
+                            placeholder="कस्टम अमाउंट"
+                        />
+                    </div>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="space-y-6">
+                    
+                    <!-- Game Rules -->
+                    <div class="bg-white bg-opacity-10 backdrop-blur-lg rounded-xl p-6">
+                        <h3 class="text-xl font-bold text-white mb-4">🎁 गेम रूल्स</h3>
+                        <div class="text-white text-opacity-80 text-sm space-y-2">
+                            <p>• 30 सेकंड में अपना रंग चुनें</p>
+                            <p>• लाल/हरा: 2x मल्टिप्लायर</p>
+                            <p>• नीला: 3x मल्टिप्लायर</p>
+                            <p>• पीला: 4x मल्टिप्लायर</p>
+                            <p>• बैंगनी: 5x मल्टिप्लायर</p>
+                            <p>• गुलाबी: 6x मल्टिप्लायर</p>
+                            <p>• नंबर के आधार पर रंग निकलता है</p>
+                            <p>• 0,5 = रेड, बाकी इवन = रेड, ऑड = ग्रीन</p>
+                        </div>
+                    </div>
+
+                    <!-- Recent Results -->
+                    <div class="bg-white bg-opacity-10 backdrop-blur-lg rounded-xl p-6">
+                        <h3 class="text-xl font-bold text-white mb-4">📜 रिसेंट रिजल्ट्स</h3>
+                        <div id="gameHistory" class="space-y-3 max-h-64 overflow-y-auto">
+                            <p class="text-white text-opacity-70 text-center py-4">अभी तक कोई गेम नहीं खेला</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game State
+        let gameState = {
+            balance: 1000,
+            betAmount: 10,
+            selectedColor: '',
+            gameTimer: 30,
+            isGameActive: false,
+            result: null,
+            gameHistory: [],
+            totalWins: 0,
+            totalGames: 0,
+            streak: 0,
+            isResultShown: false
+        };
+
+        // Colors configuration
+        const colors = [
+            { name: 'लाल', value: 'red', color: '#ef4444', multiplier: 2 },
+            { name: 'हरा', value: 'green', color: '#22c55e', multiplier: 2 },
+            { name: 'नीला', value: 'blue', color: '#3b82f6', multiplier: 3 },
+            { name: 'पीला', value: 'yellow', color: '#eab308', multiplier: 4 },
+            { name: 'बैंगनी', value: 'purple', color: '#a855f7', multiplier: 5 },
+            { name: 'गुलाबी', value: 'pink', color: '#ec4899', multiplier: 6 }
+        ];
+
+        let gameInterval;
+        let resultTimeout;
+
+        // Initialize the game
+        function initGame() {
+            createColorGrid();
+            updateDisplay();
+        }
+
+        // Create color selection grid
+        function createColorGrid() {
+            const colorGrid = document.getElementById('colorGrid');
+            colorGrid.innerHTML = '';
+            
+            colors.forEach(color => {
+                const colorButton = document.createElement('button');
+                colorButton.className = `relative p-4 rounded-xl border-2 border-white border-opacity-20 hover:border-opacity-50 transition-all hover:scale-105 cursor-pointer`;
+                colorButton.style.backgroundColor = color.color + '20';
+                colorButton.onclick = () => placeBet(color.value);
+                colorButton.disabled = !gameState.isGameActive;
+                
+                colorButton.innerHTML = `
+                    <div class="w-full h-16 rounded-lg mb-3" style="background-color: ${color.color}"></div>
+                    <div class="text-white font-bold text-center">${color.name}</div>
+                    <div class="text-white text-opacity-80 text-sm text-center">${color.multiplier}x</div>
+                `;
+                
+                colorGrid.appendChild(colorButton);
+            });
+        }
+
+        // Add notification
+        function addNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification p-3 rounded-lg text-white font-semibold shadow-lg ${
+                type === 'success' ? 'bg-green-500' :
+                type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+            }`;
+            notification.textContent = message;
+            
+            document.getElementById('notifications').appendChild(notification);
+            
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 3000);
+        }
+
+        // Start new game
+        function startNewGame() {
+            gameState.gameTimer = 30;
+            gameState.isGameActive = true;
+            gameState.result = null;
+            gameState.selectedColor = '';
+            gameState.betAmount = 10;
+            gameState.isResultShown = false;
+            
+            document.getElementById('betAmount').value = 10;
+            
+            createColorGrid();
+            updateDisplay();
+            startTimer();
+            addNotification('नया गेम शुरू!', 'info');
+        }
+
+        // Start game timer
+        function startTimer() {
+            const gameStatus = document.getElementById('gameStatus');
+            
+            gameInterval = setInterval(() => {
+                if (gameState.gameTimer <= 0) {
+                    endGame();
+                    return;
+                }
+                
+                gameStatus.innerHTML = `
+                    <div class="flex items-center justify-center gap-2 mb-4">
+                        <span class="text-2xl font-bold text-white">⏰ बेटिंग टाइम</span>
+                    </div>
+                    <div class="text-6xl font-bold text-yellow-400 mb-4 pulse">
+                        ${gameState.gameTimer}s
+                    </div>
+                    <div class="text-white text-opacity-80">
+                        ${gameState.selectedColor ? `${getColorName(gameState.selectedColor)} पर ₹${gameState.betAmount} बेट लगाई गई` : 'अपना रंग चुनें!'}
+                    </div>
+                `;
+                
+                gameState.gameTimer--;
+            }, 1000);
+        }
+
+        // End game and show result
+        function endGame() {
+            clearInterval(gameInterval);
+            
+            if (!gameState.selectedColor || gameState.betAmount <= 0) {
+                addNotification('कृपया रंग चुनें और बेट लगाएं!', 'error');
+                setTimeout(startNewGame, 2000);
+                return;
+            }
+
+            gameState.isGameActive = false;
+            
+            // Generate result
+            const winningNumber = Math.floor(Math.random() * 10);
+            let winningColor;
+            
+            // Color logic based on number
+            if (winningNumber === 0 || winningNumber === 5) {
+                winningColor = 'red';
+            } else if (winningNumber % 2 === 0) {
+                winningColor = 'red';
+            } else {
+                winningColor = 'green';
+            }
+            
+            // Special colors for rare wins
+            const specialChance = Math.random();
+            if (specialChance < 0.1) winningColor = 'blue';
+            else if (specialChance < 0.05) winningColor = 'yellow';
+            else if (specialChance < 0.02) winningColor = 'purple';
+            else if (specialChance < 0.01) winningColor = 'pink';
+
+            const selectedColorData = colors.find(c => c.value === gameState.selectedColor);
+            const isWinner = gameState.selectedColor === winningColor;
+            const winAmount = isWinner ? gameState.betAmount * selectedColorData.multiplier : 0;
+            const netGain = winAmount - gameState.betAmount;
+
+            const gameResult = {
+                id: Date.now(),
+                number: winningNumber,
+                winningColor: winningColor,
+                selectedColor: gameState.selectedColor,
+                betAmount: gameState.betAmount,
+                winAmount: winAmount,
+                isWinner: isWinner,
+                netGain: netGain,
+                timestamp: new Date().toLocaleTimeString()
+            };
+
+            gameState.result = gameResult;
+            gameState.gameHistory.unshift(gameResult);
+            if (gameState.gameHistory.length > 10) {
+                gameState.gameHistory.pop();
+            }
+            
+            gameState.totalGames++;
+            
+            if (isWinner) {
+                gameState.balance += netGain;
+                gameState.totalWins++;
+                gameState.streak++;
+                addNotification(`🎉 जीत गए! ₹${winAmount} जीता!`, 'success');
+            } else {
+                gameState.balance -= gameState.betAmount;
+                gameState.streak = 0;
+                addNotification(`😔 हार गए! ₹${gameState.betAmount} गंवाया!`, 'error');
+            }
+            
+            gameState.isResultShown = true;
+            showResult();
+            updateDisplay();
+            
+            // Auto start new game after 5 seconds
+            resultTimeout = setTimeout(() => {
+                startNewGame();
+            }, 5000);
+        }
+
+        // Show game result
+        function showResult() {
+            const gameStatus = document.getElementById('gameStatus');
+            const result = gameState.result;
+            
+            gameStatus.innerHTML = `
+                <div class="text-2xl font-bold text-white mb-4">रिजल्ट</div>
+                <div class="flex justify-center items-center gap-4 mb-4">
+                    <div class="text-center">
+                        <div class="text-6xl font-bold text-yellow-400 mb-2">${result.number}</div>
+                        <div class="w-20 h-20 rounded-full mx-auto border-4 border-white border-opacity-50" style="background-color: ${getColorByValue(result.winningColor)}"></div>
+                        <div class="text-white mt-2 font-semibold">${getColorName(result.winningColor)}</div>
+                    </div>
+                </div>
+                <div class="text-2xl font-bold mb-4 ${result.isWinner ? 'text-green-400' : 'text-red-400'}">
+                    ${result.isWinner ? `🎉 आपने ₹${result.winAmount} जीता!` : `😔 आपने ₹${result.betAmount} हारा!`}
+                </div>
+                <div class="text-white text-opacity-80">अगला गेम 5 सेकंड में शुरू होगा...</div>
+            `;
+        }
+
+        // Place bet on color
+        function placeBet(colorValue) {
+            if (!gameState.isGameActive) return;
+            
+            const betAmount = parseInt(document.getElementById('betAmount').value) || 10;
+            
+            if (betAmount > gameState.balance) {
+                addNotification('पर्याप्त बैलेंस नहीं है!', 'error');
+                return;
+            }
+            
+            gameState.selectedColor = colorValue;
+            gameState.betAmount = betAmount;
+            
+            // Update UI to show selected color
+            createColorGrid();
+            updateSelectedColor();
+            
+            const colorData = colors.find(c => c.value === colorValue);
+            addNotification(`${colorData.name} पर ₹${betAmount} की बेट लगाई!`, 'success');
+        }
+
+        // Update selected color visual
+        function updateSelectedColor() {
+            const colorButtons = document.querySelectorAll('#colorGrid button');
+            colorButtons.forEach((button, index) => {
+                const color = colors[index];
+                if (color.value === gameState.selectedColor) {
+                    button.classList.add('selected-color');
+                    button.style.borderColor = '#ffc107';
+                    button.innerHTML += `<div class="absolute -top-2 -right-2 bg-yellow-400 text-black rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">✓</div>`;
+                }
+            });
+        }
+
+        // Quick bet
+        function quickBet(amount) {
+            if (!gameState.isGameActive || amount > gameState.balance) {
+                if (amount > gameState.balance) {
+                    addNotification('पर्याप्त बैलेंस नहीं है!', 'error');
+                }
+                return;
+            }
+            
+            gameState.betAmount = amount;
+            document.getElementById('betAmount').value = amount;
+            
+            // Update bet button styles
+            document.querySelectorAll('.bet-btn').forEach(btn => {
+                btn.classList.remove('bg-yellow-500', 'text-black');
+                btn.classList.add('bg-white', 'bg-opacity-10', 'text-white');
+            });
+            
+            event.target.classList.remove('bg-white', 'bg-opacity-10', 'text-white');
+            event.target.classList.add('bg-yellow-500', 'text-black');
+        }
+
+        // Update display
+        function updateDisplay() {
+            document.getElementById('balance').textContent = `₹${gameState.balance}`;
+            document.getElementById('winRate').textContent = `${getWinRate()}%`;
+            document.getElementById('streak').textContent = gameState.streak;
+            document.getElementById('totalGames').textContent = gameState.totalGames;
+            
+            updateGameHistory();
+        }
+
+        // Update game history
+        function updateGameHistory() {
+            const historyDiv = document.getElementById('gameHistory');
+            
+            if (gameState.gameHistory.length === 0) {
+                historyDiv.innerHTML = '<p class="text-white text-opacity-70 text-center py-4">अभी तक कोई गेम नहीं खेला</p>';
+                return;
+            }
+            
+            historyDiv.innerHTML = gameState.gameHistory.map(game => `
+                <div class="bg-white bg-opacity-5 rounded-lg p-3 border-l-4" style="border-left-color: ${getColorByValue(game.winningColor)}">
+                    <div class="flex justify-between items-center mb-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-2xl font-bold text-white">${game.number}</span>
+                            <div class="w-4 h-4 rounded-full" style="background-color: ${getColorByValue(game.winningColor)}"></div>
+                        </div>
+                        <span class="text-xs text-white text-opacity-70">${game.timestamp}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-white text-opacity-80">
+                            बेट: ${getColorName(game.selectedColor)} - ₹${game.betAmount}
+                        </span>
+                        <span class="font-bold ${game.isWinner ? 'text-green-400' : 'text-red-400'}">
+                            ${game.isWinner ? `+₹${game.winAmount}` : `-₹${game.betAmount}`}
+                        </span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Helper functions
+        function getWinRate() {
+            return gameState.totalGames > 0 ? ((gameState.totalWins / gameState.totalGames) * 100).toFixed(1) : 0;
+        }
+
+        function getColorByValue(colorValue) {
+            return colors.find(c => c.value === colorValue)?.color || '#gray';
+        }
+
+        function getColorName(colorValue) {
+            return colors.find(c => c.value === colorValue)?.name || colorValue;
+        }
+
+        // Handle bet amount input
+        document.getElementById('betAmount').addEventListener('input', function() {
+            const value = parseInt(this.value) || 0;
+            if (value > gameState.balance) {
+                this.value = gameState.balance;
+            }
+            gameState.betAmount = parseInt(this.value) || 10;
+        });
+
+        // Initialize game on page load
+        window.onload = initGame;
+    </script>
+</body>
+</html>
